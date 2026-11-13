@@ -75,6 +75,8 @@ If your site uses other paths, change the rules to match. For example, a site wi
 /collections/:collection > /collections/:collection/
 ```
 
+**On WordPress with RedeemID**, empty **Paths on your site**: the plugin serves `/products/`, `/collections/` and `/cart/` on the same paths as Shopify, so every path can stay as it is. Add a rule only for a storefront path you changed in RedeemID's settings. The plugin handles discount links and store sign-in the same way.
+
 Policy pages (`/policies/…`) keep their path, so add a rule if your site has them elsewhere, such as `/policies/privacy-policy > /privacy/`.
 
 ## Discount links
