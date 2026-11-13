@@ -1,0 +1,87 @@
+{%- comment -%}
+  Outputs the site path for a store path, from the "Paths on your site" rules.
+
+  Each rule is one line, "store path > site path". The first rule that
+  matches wins; a path no rule matches keeps its own path.
+  - ":name" matches one part of the path, and puts that part in the site path.
+  - "*" at the end matches the rest of the path, which may be empty, and puts
+    the rest in the site path.
+  - Anything else must match exactly. Trailing slashes don't matter on the
+    store side; the site path keeps the one you write.
+
+  Usage: {% render 'site-path', path: request.path, rules: settings.path_rules %}
+{%- endcomment -%}
+{%- assign path_parts = path | remove_first: '/' | split: '/' -%}
+{%- assign result = path -%}
+{%- assign lines = rules | newline_to_br | split: '<br />' -%}
+
+{%- for raw_line in lines -%}
+  {%- assign line = raw_line | strip -%}
+  {%- unless line contains '>' -%}{%- continue -%}{%- endunless -%}
+  {%- assign halves = line | split: '>' -%}
+  {%- if halves.size != 2 -%}{%- continue -%}{%- endif -%}
+  {%- assign from = halves[0] | strip -%}
+  {%- assign to = halves[1] | strip -%}
+  {%- if from == blank or to == blank -%}{%- continue -%}{%- endif -%}
+
+  {%- assign from_parts = from | remove_first: '/' | split: '/' -%}
+  {%- assign last_part = from_parts | last -%}
+  {%- assign fixed = from_parts.size -%}
+  {%- if last_part == '*' -%}
+    {%- assign fixed = from_parts.size | minus: 1 -%}
+    {%- if path_parts.size < fixed -%}{%- continue -%}{%- endif -%}
+  {%- elsif path_parts.size != fixed -%}
+    {%- continue -%}
+  {%- endif -%}
+
+  {%- assign matches = true -%}
+  {%- if fixed > 0 -%}
+    {%- assign last_index = fixed | minus: 1 -%}
+    {%- for i in (0..last_index) -%}
+      {%- assign rule_part = from_parts[i] -%}
+      {%- assign first_char = rule_part | slice: 0 -%}
+      {%- if first_char != ':' and rule_part != path_parts[i] -%}
+        {%- assign matches = false -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+  {%- unless matches -%}{%- continue -%}{%- endunless -%}
+
+  {%- assign rest = '' -%}
+  {%- if last_part == '*' and path_parts.size > fixed -%}
+    {%- assign rest_count = path_parts.size | minus: fixed -%}
+    {%- assign rest = path_parts | slice: fixed, rest_count | join: '/' -%}
+  {%- endif -%}
+
+  {%- assign out = '' -%}
+  {%- assign to_parts = to | remove_first: '/' | split: '/' -%}
+  {%- for to_part in to_parts -%}
+    {%- assign value = to_part -%}
+    {%- assign first_char = to_part | slice: 0 -%}
+    {%- if to_part == '*' -%}
+      {%- assign value = rest -%}
+    {%- elsif first_char == ':' -%}
+      {%- assign value = '' -%}
+      {%- for rule_part in from_parts -%}
+        {%- if rule_part == to_part -%}
+          {%- assign value = path_parts[forloop.index0] -%}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
+    {%- if value != blank -%}
+      {%- assign out = out | append: '/' | append: value -%}
+    {%- endif -%}
+  {%- endfor -%}
+
+  {%- assign to_end = to | slice: -1 -%}
+  {%- if out == blank -%}
+    {%- assign out = '/' -%}
+  {%- elsif to_end == '/' -%}
+    {%- assign out = out | append: '/' -%}
+  {%- endif -%}
+  {%- assign result = out -%}
+  {%- break -%}
+{%- endfor -%}
+{{- result -}}
