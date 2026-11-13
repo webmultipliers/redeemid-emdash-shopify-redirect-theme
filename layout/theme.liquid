@@ -15,7 +15,10 @@
     {% comment %}
       Should redirect if the template is defined (will be undefined for app proxies like /apps|a|community|tools/*)
     {% endcomment %}
-    {%- assign should_redirect = template != blank -%}
+    {%- assign should_redirect = false -%}
+    {%- if template != blank -%}
+      {%- assign should_redirect = true -%}
+    {%- endif -%}
     {%- assign site_host = settings.storefront_hostname | strip | remove: 'https://' | remove: 'http://' | split: '/' | first -%}
 
     {%- comment -%} The store path without a market's language prefix (e.g. /fr). {%- endcomment -%}
