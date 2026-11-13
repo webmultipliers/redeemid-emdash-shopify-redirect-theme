@@ -1,0 +1,36 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "RedeemID redirect for EmDash",
+    "theme_author": "RedeemID",
+    "theme_version": "1.0.0",
+    "theme_documentation_url": "https://github.com/webmultipliers/redeemid-emdash-shopify-redirect-theme#readme",
+    "theme_support_url": "https://github.com/webmultipliers/redeemid-emdash-shopify-redirect-theme/issues"
+  },
+  {
+    "name": "Your site",
+    "settings": [
+      {
+        "type": "text",
+        "id": "storefront_hostname",
+        "label": "Send visitors to",
+        "info": "Your EmDash site's domain, without http:// or https://.",
+        "placeholder": "example.com"
+      },
+      {
+        "type": "textarea",
+        "id": "path_rules",
+        "label": "Paths on your site",
+        "default": "/products/:handle > /shop/:handle/\n/collections/:collection/products/:handle > /shop/:handle/\n/collections/* > /shop/\n/search > /shop/search\n/pages/:page > /:page/\n/blogs/:blog/:article > /posts/:article/\n/blogs/* > /posts/\n/account/* > /account",
+        "info": "One rule per line: store path > site path. :name matches one part of the path, * at the end matches the rest. The first match wins, and other paths stay the same. [Learn more](https://github.com/webmultipliers/redeemid-emdash-shopify-redirect-theme#paths-on-your-site)"
+      },
+      {
+        "type": "checkbox",
+        "id": "integrate_with_customer_accounts",
+        "label": "Carry sign-in over to the site",
+        "default": true,
+        "info": "Adds logged_in=true when the customer is signed in to the store, so the site signs them in too without a form. [Learn more](https://github.com/webmultipliers/redeemid-emdash-shopify-redirect-theme#sign-in)"
+      }
+    ]
+  }
+]

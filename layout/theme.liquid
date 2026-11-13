@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+    <meta name="robots" content="noindex">
+    <title>
+      {{ page_title }}
+    </title>
+
+    {{ content_for_header }}
+
+    {% comment %}
+      Should redirect if the template is defined (will be undefined for app proxies like /apps|a|community|tools/*)
+    {% endcomment %}
+    {%- assign should_redirect = template != blank -%}
+    {%- assign site_host = settings.storefront_hostname | strip | remove: 'https://' | remove: 'http://' | split: '/' | first -%}
+
+    {%- comment -%} The store path without a market's language prefix (e.g. /fr). {%- endcomment -%}
+    {%- assign store_path = request.path -%}
+    {%- assign locale_root = request.locale.root_url | default: '/' -%}
+    {%- if locale_root != '/' -%}
+      {%- assign locale_prefix = locale_root | append: '/' -%}
+      {%- assign path_start = store_path | slice: 0, locale_prefix.size -%}
+      {%- if store_path == locale_root -%}
+        {%- assign store_path = '/' -%}
+      {%- elsif path_start == locale_prefix -%}
+        {%- assign store_path = store_path | remove_first: locale_root -%}
+      {%- endif -%}
+    {%- endif -%}
+
+    {%- capture site_path -%}{% render 'site-path', path: store_path, rules: settings.path_rules %}{%- endcapture -%}
+    {%- assign site_url = 'https://' | append: site_host | append: site_path -%}
+
+    {%- if site_host != blank and should_redirect -%}
+      <link rel="canonical" href="{{ site_url }}">
+    {% else %}
+      <link rel="canonical" href="{{ canonical_url }}">
+    {% endif %}
+
+    {%- if site_host != blank and should_redirect -%}
+      <script>
+        function getCookie(name) {
+          name = name + '=';
+          var decodedCookie = decodeURIComponent(document.cookie);
+          var cookies = decodedCookie.split(';');
+          for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf(name) == 0) {
+              return cookie.substring(name.length, cookie.length);
+            }
+          }
+        }
+
+        function deleteCookie(name) {
+          document.cookie = name +'=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        }
+
+        if (
+          !window.Shopify.designMode &&
+            window.location.pathname !== '/checkpoint' &&
+            window.location.pathname !== '/throttle/queue' &&
+            window.location.pathname !== '/challenge'
+        ) {
+          var siteHostname = {{ site_host | json }};
+
+          if (window.location.hostname !== siteHostname) {
+            {% comment %} The path comes from the "Paths on your site" rules; the query string and hash carry over. {% endcomment %}
+            var redirectUrl = new URL({{ site_url | json }} + window.location.search + window.location.hash);
+
+            {%- if settings.integrate_with_customer_accounts and customer != null -%}
+              redirectUrl.searchParams.set('logged_in', 'true');
+
+              {%- if customer.current_location != null -%}
+                redirectUrl.searchParams.set('company_location_id', '{{ customer.current_location.id }}');
+              {%- endif -%}
+            {%- endif -%}
+
+            {% comment %}
+              Handle discount code logic (e.g. shop.example.com/discount/freeshipping?redirect=/products/gold)
+              - Add the discount code as a param to the redirect URL if the `discount_code` cookie exists
+              - The cookie is deleted after, so it isn't added to other routes
+            {% endcomment %}
+            var discountCode = getCookie('discount_code');
+            if (discountCode) {
+              redirectUrl.searchParams.set('discount', discountCode);
+              deleteCookie('discount_code');
+            }
+            window.storefrontRedirectUrl = redirectUrl;
+            window.location.replace(redirectUrl);
+          }
+        }
+      </script>
+    {%- endif -%}
+
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui;
+        box-sizing: border-box;
+        padding: clamp(1em, 5vw, 5em);
+        min-height: 100vh;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        line-height: 1.5;
+      }
+      h1 {
+        color: inherit;
+        font-size: 1em;
+      }
+      h1 > a {
+        text-decoration: none;
+        color: inherit;
+      }
+      p {
+        max-width: 65ch;
+      }
+      footer {
+        opacity: 0.55;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          color: #a1b8c1;
+          background: rgb(33, 33, 33);
+        }
+        a {
+          color: #81a9fe;
+        }
+        a:visited {
+          color: #c691e8;
+        }
+        h1 > a,
+        h1 > a:visited {
+          color: #a1b8c1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    {%- if should_redirect -%}
+      <main class="redirect">
+        {%- if site_host != blank -%}
+          <h1>Taking you to {{ shop.name | escape }}…</h1>
+          <p>
+            <a id="redirect-link" href="{{ site_url }}">Continue to {{ site_host | escape }}</a>
+            if nothing happens.
+          </p>
+          <script>
+            if (!window.Shopify.designMode && window.storefrontRedirectUrl) {
+              document.getElementById('redirect-link').href = window.storefrontRedirectUrl;
+            }
+          </script>
+        {%- else -%}
+          <h1>No site address yet</h1>
+          <p>Add your EmDash site's domain in "Theme settings > Your site > Send visitors to".</p>
+        {%- endif -%}
+      </main>
+    {%- endif -%}
+    {{ content_for_layout }}
+  </body>
+</html>
