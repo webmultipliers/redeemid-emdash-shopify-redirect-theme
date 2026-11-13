@@ -99,4 +99,4 @@ Shopify shows gift cards on the store, so `templates/gift_card.liquid` keeps a g
 
 ## License
 
-MIT. Based on Shopify's Hydrogen redirect theme (the Sell on WordPress theme), © Shopify, Inc., and Instant Commerce, also MIT. See [LICENSE.md](LICENSE.md).
+MIT. Based on Shopify's Hydrogen redirect theme, © Shopify, Inc., and Instant Commerce, also MIT. See [LICENSE.md](LICENSE.md).
